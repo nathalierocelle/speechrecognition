@@ -118,7 +118,7 @@ def convert_audio_to_text(file_path):
         return None
 
 def sentiment_analysis(text):
-    sentiment_analysis = pipeline(model="lxyuan/distilbert-base-multilingual-cased-sentiments-student", return_all_scores=True)
+    sentiment_analysis = pipeline(model="lxyuan/distilbert-base-multilingual-cased-sentiments-student", top_k=None=True)
     sentiment = sentiment_analysis(text)
     inner_list = sentiment[0]
     return sentiment
