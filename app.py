@@ -90,6 +90,17 @@ def download_file_from_s3(bucket, s3_file, aws_access_key, aws_secret_access_key
         st.write(f"Error occurred: {e}")
         return False
 
+
+def load_s3_audio(bucket_name, file_name):
+    s3 = boto3.client('s3')
+    try:
+        file_obj = s3.get_object(Bucket=bucket_name, Key=file_name)
+        file_data = file_obj["Body"].read()
+        return file_data
+    except NoCredentialsError:
+        st.error("No AWS Credentials found.")
+        return None
+    
 # def record_audio():
 #     audio = audiorecorder("Click to record", "Stop recording")
 #     if len(audio) > 0:
@@ -170,6 +181,7 @@ if __name__ == '__main__':
                 f.write(uploaded_file.getbuffer())
             st.success('File Uploaded in AWS')
             upload_to_aws(uploaded_file.name, bucket_name, uploaded_file.name,AWS_ACCESS_KEY, AWS_SECRET_KEY)
+            file_data = load_s3_audio(bucket_name, uploaded_file.name)
         if uploaded_file is not None:
             with open(uploaded_file.name, 'wb') as f:
                 f.write(uploaded_file.getbuffer())
@@ -177,7 +189,8 @@ if __name__ == '__main__':
 
     
     if st.button("Transcribe"):
-        converted_text = convert_audio_to_text(uploaded_file.name)
+        
+        converted_text = convert_audio_to_text(file_data)
         sentiment = sentiment_analysis(converted_text)
         sentence_ner = extract_entities(converted_text)
         fig = plot_sentiment_analysis(sentiment)
