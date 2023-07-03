@@ -15,10 +15,14 @@ import librosa.display
 from audiorecorder import audiorecorder
 from flair.data import Sentence
 from flair.models import SequenceTagger
-
-
+from st_files_connection import FilesConnection
+import boto3
+import requests 
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+bucket_name = 'speechrecognition-streamlit'
+AWS_ACCESS_KEY = st.secrets["AWS_ACCESS_KEY_ID"]
+AWS_SECRET_KEY = st.secrets["AWS_SECRET_ACCESS_KEY"]
 
 st.title('Speech Recognition')
 with st.sidebar:
@@ -61,6 +65,29 @@ def save_audio(file):
         f.write(file.getbuffer())
     return 0
 
+
+def upload_to_aws(local_file, bucket, s3_file, aws_access_key, aws_secret_access_key):
+    s3 = boto3.client('s3', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key)
+    try:
+        s3.upload_file(local_file, bucket, s3_file)
+        st.write("Upload Successful")
+        return True
+    except FileNotFoundError:
+        st.write("The file was not found")
+        return False
+    except NoCredentialsError:
+        st.write("Credentials not available")
+        return False
+    
+def download_file_from_s3(bucket, s3_file, aws_access_key, aws_secret_access_key):
+    s3 = boto3.client('s3', aws_access_key_id=aws_access_key, aws_secret_access_key=aws_secret_access_key)
+    try:
+        s3.download_file(bucket, s3_file, s3_file)
+        st.write("Download Successful")
+        return True
+    except Exception as e:
+        st.write(f"Error occurred: {e}")
+        return False
 
 # def record_audio():
 #     audio = audiorecorder("Click to record", "Stop recording")
@@ -131,22 +158,18 @@ if __name__ == '__main__':
         st.header('Upload an audio file')
         uploaded_file = st.file_uploader("",type=[".mp3",".mp4",".wav","wave"])
         if uploaded_file is not None:
-            if not os.path.exists("audio"):
-                os.makedirs("audio")
-            path = os.path.join("audio", uploaded_file.name)
-            if_save_audio = save_audio(uploaded_file)
-            if if_save_audio == 1:
-                st.warning("File size is too large. Try another file.",icon="⚠️")
-            elif if_save_audio == 0:
-                st.audio(uploaded_file, format='audio/wav', start_time=0)
-                try:
-                    audio_bytes = uploaded_file.read()      
-                except Exception as e:
-                    uploaded_file = None
-                    st.error(f"Error {e} - wrong format of the file. Try another .wav file.")
+            with open(uploaded_file.name, 'wb') as f:
+                f.write(uploaded_file.getbuffer())
+            st.success('File Uploaded in AWS')
+            upload_to_aws(uploaded_file.name, bucket_name, uploaded_file.name,AWS_ACCESS_KEY, AWS_SECRET_KEY)
+        if uploaded_file is not None:
+            with open(uploaded_file.name, 'wb') as f:
+                f.write(uploaded_file.getbuffer())
+            st.success('File Uploaded')
+
     
     if st.button("Transcribe"):
-        converted_text = convert_audio_to_text(path)
+        converted_text = convert_audio_to_text(uploaded_file.name)
         sentiment = sentiment_analysis(converted_text)
         sentence_ner = extract_entities(converted_text)
         fig = plot_sentiment_analysis(sentiment)

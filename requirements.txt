@@ -6,3 +6,5 @@ torch
 flair
 librosa
 streamlit-audiorecorder
+s3fs
+git+https://github.com/streamlit/files-connection
