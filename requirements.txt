@@ -3,6 +3,7 @@ numpy
 matplotlib
 transformers
 torch
+torchvision
 flair
 librosa
 streamlit-audiorecorder
