@@ -1,0 +1,8 @@
+streamlit
+numpy
+matplotlib
+transformers
+torch
+flair
+librosa
+streamlit-audiorecorder
