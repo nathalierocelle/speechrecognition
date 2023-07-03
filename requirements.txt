@@ -7,4 +7,5 @@ flair
 librosa
 streamlit-audiorecorder
 s3fs
+speech_recognition
 git+https://github.com/streamlit/files-connection
