@@ -18,6 +18,7 @@ from flair.models import SequenceTagger
 from st_files_connection import FilesConnection
 import boto3
 import requests 
+import speech_recognition as sr
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 bucket_name = 'speechrecognition-streamlit'
@@ -103,11 +104,18 @@ def record_audio():
         wav_file.write(wav_audio_data) 
     return "audio/recorded_audio.wav"
     
-def convert_audio_to_text(audio):
-    whisper = pipeline('automatic-speech-recognition', model = 'openai/whisper-medium', device = 0)
-    audio = librosa.load(audio)
-    text = whisper(audio[0])['text']
-    return text
+def convert_audio_to_text(file_path):
+    r = sr.Recognizer()
+    file_audio = sr.AudioFile(file_path)
+    with file_audio as source:
+        audio_text = r.record(source)
+    try:
+        st.write("Converting audio transcripts into text ...")
+        text = r.recognize_google(audio_text)
+        return text
+    except Exception as e:
+        st.write(f"Error occurred: {e}")
+        return None
 
 def sentiment_analysis(text):
     sentiment_analysis = pipeline(model="lxyuan/distilbert-base-multilingual-cased-sentiments-student", return_all_scores=True)
