@@ -10,5 +10,5 @@ streamlit-audiorecorder
 s3fs
 boto3
 SpeechRecognition
-xformers
+# xformers
 git+https://github.com/streamlit/files-connection
